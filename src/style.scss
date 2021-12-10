@@ -5,3 +5,9 @@ html {
 	color: #ccc;
 	font-family: sans-serif;
 }
+
+#app {
+	min-height: 100%;
+	display: grid;
+	place-items: center;
+}
