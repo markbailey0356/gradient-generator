@@ -34,16 +34,24 @@ export default defineComponent({
 		camera.position.z = 0;
 		camera.updateProjectionMatrix();
 
-		const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
 
-		const geometry = new THREE.CircleGeometry(0.02, 16);
-		const circle = new THREE.Mesh(geometry, material);
-		scene.add(circle);
+		const circles = [
+			{ x: -0.5, y: -0.5 },
+			{ x: 0.5, y: -0.5 },
+			{ x: 0, y: 0.5 },
+		].map(({ x, y }) => {
+			const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
+			const geometry = new THREE.CircleGeometry(0.02, 16);
+			const circle = new THREE.Mesh(geometry, material);
+			scene.add(circle);
+			circle.position.set(x, y, 0);
+			return circle
+		})
 
 		const raycaster = new THREE.Raycaster();
 
 		const onMouseDown = (event: MouseEvent) => {
-			if (mouseOverCircle.value) {
+			if (selectedCircle.value) {
 				mouseDraggingCircle.value = true;
 			}
 		}
@@ -54,7 +62,7 @@ export default defineComponent({
 		const canvas = ref<HTMLCanvasElement>(null);
 		const mouseInElement = useMouseInElement(canvas);
 		const mouse = computed(() => {
-			const {elementX, elementY, elementHeight, elementWidth} = mouseInElement;
+			const { elementX, elementY, elementHeight, elementWidth } = mouseInElement;
 			return {
 				x: clamp((elementX.value / elementWidth.value) * 2 - 1, -1, 1),
 				y: -clamp((elementY.value / elementHeight.value) * 2 - 1, -1, 1),
@@ -63,13 +71,13 @@ export default defineComponent({
 
 		const cursor = computed(() => {
 			if (mouseDraggingCircle.value) return 'grabbing';
-			if (mouseOverCircle.value) return 'grab';
+			if (selectedCircle.value) return 'grab';
 			return 'default';
 		});
-		const mouseOverCircle = ref(false);
+		const selectedCircle = ref<THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial> | null>(null);
 		const mouseDraggingCircle = ref(false);
 
-		
+
 		onMounted(() => {
 			const renderer = new THREE.WebGLRenderer({ canvas: unref(canvas), antialias: true, });
 			useRafFn(render(renderer));
@@ -79,17 +87,21 @@ export default defineComponent({
 		const render = (renderer: THREE.Renderer) => () => {
 			raycaster.setFromCamera(unref(mouse), camera);
 
-			const intersection = raycaster.intersectObject(circle);
-			mouseOverCircle.value = !!intersection.length;
-
-			if (mouseOverCircle.value || mouseDraggingCircle.value) {
-				material.color = new THREE.Color(0xff0000);
+			if (mouseDraggingCircle.value) {
+				selectedCircle.value.position.copy(new THREE.Vector3(mouse.value.x, mouse.value.y, 0).applyMatrix4(camera.projectionMatrixInverse))
 			} else {
-				material.color = new THREE.Color(0xffffff);
+				const intersections = raycaster.intersectObjects(circles);
+				if (intersections.length) {
+					selectedCircle.value = <THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>>intersections[0].object;
+				} else {
+					selectedCircle.value = null;
+				}
 			}
 
-			if (mouseDraggingCircle.value) {
-				circle.position.copy(new THREE.Vector3(mouse.value.x, mouse.value.y, 0).applyMatrix4(camera.projectionMatrixInverse))
+			if (selectedCircle.value) {
+				selectedCircle.value.material.color = new THREE.Color(0xff0000);
+			} else {
+				circles.forEach(x => x.material.color = new THREE.Color(0xffffff));
 			}
 
 			renderer.render(scene, camera);
