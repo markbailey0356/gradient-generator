@@ -84,6 +84,12 @@ export default defineComponent({
 			onUnmounted(() => renderer.dispose());
 		})
 
+		const triangle = new THREE.LineLoop(
+			new THREE.BufferGeometry(),
+			new THREE.LineBasicMaterial({ color: 0xffffff })
+		)
+		scene.add(triangle);
+
 		const render = (renderer: THREE.Renderer) => () => {
 			raycaster.setFromCamera(unref(mouse), camera);
 
@@ -103,6 +109,8 @@ export default defineComponent({
 			} else {
 				circles.forEach(x => x.material.color = new THREE.Color(0xffffff));
 			}
+
+			triangle.geometry.setFromPoints(circles.map(x => x.position));
 
 			renderer.render(scene, camera);
 		}
