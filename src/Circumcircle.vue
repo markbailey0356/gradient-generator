@@ -15,6 +15,10 @@ import { useMouseInElement, useRafFn } from '@vueuse/core';
 
 import * as THREE from 'three';
 
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { SMAAPass } from 'three/examples/jsm/postprocessing/SMAAPass.js';
+
 const clamp = (x: number, min: number, max: number) => Math.max(min, Math.min(x, max));
 
 export default defineComponent({
@@ -80,7 +84,17 @@ export default defineComponent({
 
 		onMounted(() => {
 			const renderer = new THREE.WebGLRenderer({ canvas: unref(canvas), antialias: true, });
-			useRafFn(render(renderer));
+
+			const composer = new EffectComposer(renderer);
+
+			const renderPass = new RenderPass(scene, camera)
+			composer.addPass(renderPass);
+
+			const antialiasingPass = new SMAAPass(canvas.value.width * renderer.getPixelRatio(), canvas.value.height * renderer.getPixelRatio());
+			composer.addPass(antialiasingPass);
+
+			useRafFn(render(composer));
+
 			onUnmounted(() => renderer.dispose());
 		})
 
@@ -90,7 +104,8 @@ export default defineComponent({
 		)
 		scene.add(triangle);
 
-		const render = (renderer: THREE.Renderer) => () => {
+
+		const render = (renderer) => () => {
 			raycaster.setFromCamera(unref(mouse), camera);
 
 			if (mouseDraggingCircle.value) {
