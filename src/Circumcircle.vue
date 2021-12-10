@@ -21,6 +21,24 @@ import { SMAAPass } from 'three/examples/jsm/postprocessing/SMAAPass.js';
 
 const clamp = (x: number, min: number, max: number) => Math.max(min, Math.min(x, max));
 
+const calculateCircumcenter = (v1: THREE.Vector3, v2: THREE.Vector3, v3: THREE.Vector3): THREE.Vector3 | null => {
+	const line1 = new THREE.Line3(v1, v2);
+	const center1 = line1.getCenter(new THREE.Vector3());
+	const perp1 = line1.delta(new THREE.Vector3()).applyAxisAngle(new THREE.Vector3(0,0,1), Math.PI / 2).normalize();
+	const ray = new THREE.Ray(center1, perp1);
+
+	const line2 = new THREE.Line3(v2, v3);
+	const normal = line2.delta(new THREE.Vector3()).normalize();
+	const center2 = line2.getCenter(new THREE.Vector3());
+	const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(normal, center2);
+
+	const intersection = new THREE.Vector3()
+	if (ray.intersectPlane(plane, intersection)) return intersection;
+	ray.direction.multiplyScalar(-1);
+	if (ray.intersectPlane(plane, intersection)) return intersection;
+	return null;
+}
+
 export default defineComponent({
 	setup() {
 		const scene = new THREE.Scene();
@@ -38,19 +56,22 @@ export default defineComponent({
 		camera.position.z = 0;
 		camera.updateProjectionMatrix();
 
-
-		const circles = [
-			{ x: -0.5, y: -0.5 },
-			{ x: 0.5, y: -0.5 },
-			{ x: 0, y: 0.5 },
-		].map(({ x, y }) => {
+		const createCircle = ({ x = 0, y = 0 } = {}) => {
 			const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
 			const geometry = new THREE.CircleGeometry(0.02, 16);
 			const circle = new THREE.Mesh(geometry, material);
 			scene.add(circle);
 			circle.position.set(x, y, 0);
 			return circle
-		})
+		}
+
+		const circles = [
+			{ x: -0.5, y: -0.5 },
+			{ x: 0.5, y: -0.5 },
+			{ x: 0, y: 0.5 },
+		].map(createCircle);
+
+		const circumcenter = createCircle();
 
 		const raycaster = new THREE.Raycaster();
 
@@ -110,6 +131,7 @@ export default defineComponent({
 
 			if (mouseDraggingCircle.value) {
 				selectedCircle.value.position.copy(new THREE.Vector3(mouse.value.x, mouse.value.y, 0).applyMatrix4(camera.projectionMatrixInverse))
+				selectedCircle.value.position.z = 0;
 			} else {
 				const intersections = raycaster.intersectObjects(circles);
 				if (intersections.length) {
@@ -124,6 +146,12 @@ export default defineComponent({
 			} else {
 				circles.forEach(x => x.material.color = new THREE.Color(0xffffff));
 			}
+
+			// if (circumcenter.position.y > 1000) debugger;
+
+			circumcenter.position.copy(calculateCircumcenter(circles[0].position, circles[1].position, circles[2].position));
+			circumcenter.position.z = 0;
+			console.log(circumcenter.position);
 
 			triangle.geometry.setFromPoints(circles.map(x => x.position));
 
