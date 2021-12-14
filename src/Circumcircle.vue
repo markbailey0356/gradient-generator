@@ -18,13 +18,14 @@ import * as THREE from 'three';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { SMAAPass } from 'three/examples/jsm/postprocessing/SMAAPass.js';
+import { BufferGeometry } from 'three';
 
 const clamp = (x: number, min: number, max: number) => Math.max(min, Math.min(x, max));
 
 const calculateCircumcenter = (v1: THREE.Vector3, v2: THREE.Vector3, v3: THREE.Vector3): THREE.Vector3 | null => {
 	const line1 = new THREE.Line3(v1, v2);
 	const center1 = line1.getCenter(new THREE.Vector3());
-	const perp1 = line1.delta(new THREE.Vector3()).applyAxisAngle(new THREE.Vector3(0,0,1), Math.PI / 2).normalize();
+	const perp1 = line1.delta(new THREE.Vector3()).applyAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI / 2).normalize();
 	const ray = new THREE.Ray(center1, perp1);
 
 	const line2 = new THREE.Line3(v2, v3);
@@ -125,6 +126,12 @@ export default defineComponent({
 		)
 		scene.add(triangle);
 
+		const circumcircle = new THREE.LineLoop(
+			new THREE.BufferGeometry(),
+			new THREE.LineBasicMaterial({ color: 0xffffff })
+		)
+		circumcircle.geometry.setFromPoints(new THREE.EllipseCurve(0, 0, 1, 1, 0, 2 * Math.PI, false, 0).getPoints(64))
+		scene.add(circumcircle);
 
 		const render = (renderer) => () => {
 			raycaster.setFromCamera(unref(mouse), camera);
@@ -147,13 +154,14 @@ export default defineComponent({
 				circles.forEach(x => x.material.color = new THREE.Color(0xffffff));
 			}
 
-			// if (circumcenter.position.y > 1000) debugger;
-
 			circumcenter.position.copy(calculateCircumcenter(circles[0].position, circles[1].position, circles[2].position));
 			circumcenter.position.z = 0;
-			console.log(circumcenter.position);
 
 			triangle.geometry.setFromPoints(circles.map(x => x.position));
+
+			const circumcircleRadius = circumcenter.position.distanceTo(circles[0].position);
+			circumcircle.position.copy(circumcenter.position);
+			circumcircle.scale.set(circumcircleRadius, circumcircleRadius, 0);
 
 			renderer.render(scene, camera);
 		}
