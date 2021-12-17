@@ -34,7 +34,11 @@ export default defineComponent({
 			camera.position.z = 0;
 			camera.updateProjectionMatrix();
 
-			const geometry = new THREE.PlaneGeometry(1, 1);
+			const referenceGeometry = new THREE.PlaneGeometry(1, 1);
+			const geometry = new THREE.InstancedBufferGeometry();
+			geometry.index = referenceGeometry.index;
+			geometry.attributes = referenceGeometry.attributes;
+
 			const material = new THREE.RawShaderMaterial({
 				vertexShader: instancedCircleVert,
 				fragmentShader: circleFrag,
@@ -46,7 +50,7 @@ export default defineComponent({
 				blendSrc: THREE.OneFactor,
 				blendDst: THREE.OneFactor,
 				depthTest: false,
-				depthWrite: false,
+				// depthWrite: false,
 			})
 
 			const size = 64;
@@ -54,26 +58,37 @@ export default defineComponent({
 			const rowCount = size;
 			const columnCount = size;
 
-			const circles = new THREE.InstancedMesh(geometry, material, rowCount * columnCount)
-			circles.instanceMatrix.setUsage( THREE.DynamicDrawUsage );
+			const count = rowCount * columnCount;
 
-			const dummy = new THREE.Object3D();
+			const offsetArray = new Float32Array(count * 3);
+			const scaleArray = new Float32Array(count);
+			const colorArray = new Float32Array(count * 3);
 
 			for (let rowIndex = 0; rowIndex < rowCount; rowIndex++) {
 				for (let columnIndex = 0; columnIndex < columnCount; columnIndex++) {
-					dummy.position.set((rowIndex + 0.5) / rowCount * 2 - 1, (columnIndex + 0.5) / columnCount * 2 - 1, 0);
-					dummy.scale.set(2 / size, 2 / size, 1);
-					dummy.updateMatrix();
+					const index = (rowIndex * columnCount + columnIndex)
+					const offsetIndex = 3 * index;
+					const colorIndex = 3 * index;
 
-					circles.setMatrixAt(rowIndex * columnCount + columnIndex, dummy.matrix);
+					offsetArray[offsetIndex + 0] = (rowIndex + 0.5) / rowCount * 2 - 1; // x
+					offsetArray[offsetIndex + 1] = (columnIndex + 0.5) / columnCount * 2 - 1; // y
+					offsetArray[offsetIndex + 2] = -index * 0.01; // z
+
+					scaleArray[index] = 8 / size;
+
+					colorArray[colorIndex + 0] = Math.random();
+					colorArray[colorIndex + 1] = Math.random();
+					colorArray[colorIndex + 2] = Math.random();
 				}
 			}
 
-			circles.instanceMatrix.needsUpdate = true;
+			geometry.setAttribute('offset', new THREE.InstancedBufferAttribute(offsetArray, 3));
+			geometry.setAttribute('scale', new THREE.InstancedBufferAttribute(scaleArray, 1));
+			geometry.setAttribute('color', new THREE.InstancedBufferAttribute(colorArray, 3));
 
-			console.log(circles);
-
+			const circles = new THREE.Mesh(geometry, material);
 			scene.add(circles);
+
 
 			const renderTarget = new THREE.WebGLRenderTarget(canvas.value.width, canvas.value.height);
 

@@ -1,15 +1,21 @@
 uniform mat4 projectionMatrix;
-uniform mat4 viewMatrix;
+uniform mat4 modelViewMatrix;
 
 attribute vec3 position;
 attribute vec2 uv;
-attribute mat4 instanceMatrix;
+attribute vec3 offset;
+attribute float scale;
+attribute vec3 color;
 
 varying vec2 vUv;
+varying vec3 vColor;
 
 void main()
 {
 	vUv = uv;
+	vColor = color;
 
-	gl_Position = projectionMatrix * viewMatrix * instanceMatrix * vec4(position, 1.0);
+	vec3 pos = position * scale + offset;
+
+	gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
 }

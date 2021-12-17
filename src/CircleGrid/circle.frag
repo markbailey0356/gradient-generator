@@ -1,7 +1,6 @@
 precision mediump float;
 
-uniform vec3 color;
-
+varying vec3 vColor;
 varying vec2 vUv;
 
 void main()
@@ -11,6 +10,6 @@ void main()
 
 	float s = 1.0 - step(1.0, distSq);
 
-	gl_FragColor = vec4(color * s, s);
+	gl_FragColor = vec4(vColor * s, s);
 	// gl_FragColor = vec4(color, 1.0);
 }
