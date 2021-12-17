@@ -1,5 +1,5 @@
 <template lang="pug">
-Circumcircle
+GradientGenerator
 </template>
 
 <script lang="ts">
