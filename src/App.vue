@@ -1,5 +1,5 @@
 <template lang="pug">
-CircleGrid
+MovingSamples
 </template>
 
 <script lang="ts">
@@ -8,13 +8,15 @@ import GradientGenerator from "./GradientGenerator.vue";
 import Circumcircle from "./Circumcircle.vue";
 import BlendingCircles from "./BlendingCircles/BlendingCircles.vue";
 import CircleGrid from "./CircleGrid/CircleGrid.vue";
+import MovingSamples from "./MovingSamples/MovingSamples.vue";
 
 export default defineComponent({
 	components: {
-		GradientGenerator,
-		Circumcircle,
-		BlendingCircles,
-		CircleGrid
-	}
+    GradientGenerator,
+    Circumcircle,
+    BlendingCircles,
+    CircleGrid,
+    MovingSamples
+}
 });
 </script>
