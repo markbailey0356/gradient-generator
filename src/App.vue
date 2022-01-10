@@ -1,5 +1,5 @@
 <template lang="pug">
-MovingSamples
+AvoidingSamples
 </template>
 
 <script lang="ts">
@@ -9,6 +9,7 @@ import Circumcircle from "./Circumcircle.vue";
 import BlendingCircles from "./BlendingCircles/BlendingCircles.vue";
 import CircleGrid from "./CircleGrid/CircleGrid.vue";
 import MovingSamples from "./MovingSamples/MovingSamples.vue";
+import AvoidingSamples from "./AvoidingSamples/AvoidingSamples.vue";
 
 export default defineComponent({
 	components: {
@@ -16,7 +17,8 @@ export default defineComponent({
     Circumcircle,
     BlendingCircles,
     CircleGrid,
-    MovingSamples
+    MovingSamples,
+    AvoidingSamples
 }
 });
 </script>
